@@ -25,10 +25,16 @@
 #ifndef __touchkeys__KeyPositionTracker__
 #define __touchkeys__KeyPositionTracker__
 
+#include "Types.h"
 #include <set>
-#include "../Utility/Node.h"
-#include "../Utility/Accumulator.h"
+//#include "../Utility/Node.h"
+//#include "../Utility/Accumulator.h"
 #include "PianoTypes.h"
+#include <array>
+#include <vector>
+#include <iostream>
+
+typedef size_t capacity_type;
 
 // Three states of idle detector
 enum {
@@ -40,6 +46,16 @@ enum {
     kPositionTrackerStateReleaseInProgress,
     kPositionTrackerStateReleaseFinished
 };
+
+const std::array<std::string, kPositionTrackerStateReleaseFinished + 1> statesDesc = {{
+    "kPositionTrackerStateUnknown",
+    "kPositionTrackerStatePartialPressAwaitingMax",
+    "kPositionTrackerStatePartialPressFoundMax",
+    "kPositionTrackerStatePressInProgress",
+    "kPositionTrackerStateDown",
+    "kPositionTrackerStateReleaseInProgress",
+    "kPositionTrackerStateReleaseFinished",
+}};
 
 // Constants for key state detection
 const key_position kPositionTrackerPressPosition = scale_key_position(0.75);
@@ -65,6 +81,49 @@ const key_position kPositionTrackerPositionThresholdForPercussivenessCalculation
 const int kPositionTrackerSamplesNeededForPressVelocityAfterEscapement = 1;
 const int kPositionTrackerSamplesNeededForReleaseVelocityAfterEscapement = 1;
 
+class KeyBuffers
+{
+public:
+	bool setup(unsigned int numKeys, unsigned int bufferLength);
+	void postCallback(float* buffer, unsigned int length);
+	static void postCallback(void* arg, float* buffer, unsigned int length);
+	std::vector<std::vector<timestamp_type>> timestamps;
+	std::vector<std::vector<float>> positionBuffer;
+	ssize_t writeIdx = 0;
+	ssize_t firstSampleIndex = 0;
+	bool full = false;
+};
+
+class KeyBuffer
+{
+private:
+	const std::vector<float>& buffer_;
+	const std::vector<timestamp_type>& timestamps_;
+	const ssize_t& firstSampleIndex_;
+	const ssize_t& writeIdx_;
+public:
+	KeyBuffer(const std::vector<float>& buffer, const std::vector<timestamp_type>& timestamps, const ssize_t& firstSampleIndex, const ssize_t& writeIdx) :
+		buffer_(buffer),
+		timestamps_(timestamps),
+		firstSampleIndex_(firstSampleIndex),
+		writeIdx_(writeIdx)
+	{}
+
+	ssize_t beginIndex() { return firstSampleIndex_; } // Index of the first sample we still have in the buffer
+	ssize_t endIndex() { return firstSampleIndex_ + buffer_.size() - 1; } // Index just past the end of the buffer
+	ssize_t posOf(size_t index) { return &(*this)[index] - buffer_.data();}
+	const float& operator[](size_t index) {
+		return buffer_[(writeIdx_ + index - firstSampleIndex_ + 1) % buffer_.size() ];
+	}
+
+	timestamp_type timestampAt(size_t index) { return timestamps_[posOf(index)]; }
+	ssize_t size() { return buffer_.size(); }; // Size: how many elements are currently in the buffer
+	bool empty() { return false; }
+	bool full() { return true; }
+// Two more convenience methods to avoid confusion about what front and back mean!
+	auto& earliest() { return (*this)[firstSampleIndex_];}
+	auto& latest() { return (*this)[endIndex() - 1];}
+};
 // KeyPositionTrackerNotification
 //
 // This class contains information on the notifications sent and stored by
@@ -80,7 +139,8 @@ public:
         kNotificationTypeNewMinimum,
         kNotificationTypeNewMaximum
     };
-    
+
+    const static std::array<std::string, kNotificationTypeNewMaximum + 1> desc;
     enum {
         kFeaturesNone = 0,
         kFeaturePressVelocity = 0x0001,
@@ -103,9 +163,13 @@ public:
 // This class is triggered by new data points in the key position buffer. Its output is
 // a series of state changes which indicate what the key is doing.
 
-class KeyPositionTracker : public Node<KeyPositionTrackerNotification> {
+class KeyPositionTracker 
+//: public Node<KeyPositionTrackerNotification>
+{
 public:
-    typedef Node<key_position>::size_type key_buffer_index;
+    //typedef Node<key_position>::size_type key_buffer_index;
+    typedef size_t key_buffer_index;
+
     //typedef void (*KeyActionFunction)(KeyPositionTracker *object, void *userData);
     
     // Simple class to hold index/position/timestamp triads
@@ -146,7 +210,10 @@ public:
 	// ***** Constructors *****
 	
 	// Default constructor, passing the buffer on which to trigger
-	KeyPositionTracker(capacity_type capacity, Node<key_position>& keyBuffer);
+	KeyPositionTracker(capacity_type capacity, 
+			//Node<key_position>& 
+			KeyBuffer& keyBuffer
+			);
 	
 	// Copy constructor
 	//KeyPositionTracker(KeyPositionTracker const& obj);
@@ -228,7 +295,7 @@ public:
 	
     // This method receives triggers whenever a new sample enters the buffer. It updates
     // the state depending on the profile of the key position.
-	void triggerReceived(TriggerSource* who, timestamp_type timestamp);
+	void triggerReceived(/*TriggerSource* who,*/ timestamp_type timestamp);
 	
 private:
     // ***** Internal Helper Methods *****
@@ -251,7 +318,8 @@ private:
     
 	// ***** Member Variables *****
 	
-	Node<key_position>& keyBuffer_;		// Raw key position data
+    //Node<key_position>& keyBuffer_;		// Raw key position data
+    KeyBuffer& keyBuffer_; // Raw key position data
     bool engaged_;                      // Whether we're actively listening to incoming updates
     int currentState_;                  // Our current state
     int currentlyAvailableFeatures_;    // Which features can be calculated for the current press
@@ -310,6 +378,13 @@ private:
 		int releasePosition;				// the location in the buffer of the release corner
 	} keyParameters;
 	*/
+    void registerForTrigger(KeyBuffer* b){};
+    void unregisterForTrigger(KeyBuffer* b){};
+    timestamp_type latestTimestamp() { return latestTimestamp_; };
+    timestamp_type latestTimestamp_ = 0;
+    bool empty_ = true;
+    bool empty() {bool old = empty_; empty_ = false; return old;};
+    void insert(KeyPositionTrackerNotification notification, timestamp_type timestamp);
 };
 
 
