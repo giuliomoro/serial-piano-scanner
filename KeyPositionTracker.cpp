@@ -23,7 +23,8 @@
 
 #include "KeyPositionTracker.h"
 #include <iostream>
-int rt_printf(const char *format, ...);
+extern "C" int rt_printf(const char *format, ...);
+int gPrint = 1;
 
 bool KeyBuffers::setup(unsigned int numKeys, unsigned int bufferLength)
 {
@@ -295,7 +296,8 @@ void KeyPositionTracker::disengage() {
 
 // Clear current state and reset to unknown state
 void KeyPositionTracker::reset() {
-	//Node<KeyPositionTrackerNotification>::clear(); TODO: reimplement
+	//Node<KeyPositionTrackerNotification>::clear();
+	empty_ = true; // kind of equivalent to clear() above if we are not a circular buffer. This should be unset by "insert"
     
     currentState_ = kPositionTrackerStateUnknown;
     currentlyAvailableFeatures_ = KeyPositionTrackerNotification::kFeaturesNone;
@@ -316,6 +318,8 @@ void KeyPositionTracker::reset() {
 // Evaluator function. Update the current state
 void KeyPositionTracker::triggerReceived(/*TriggerSource* who,*/ timestamp_type timestamp) {
 
+	if(kPositionTrackerStateReleaseFinished == currentState_)
+		reset(); // as if we just created this object
 	//if(who != &keyBuffer_)
 		//return;
     
@@ -756,6 +760,7 @@ void KeyPositionTracker::prepareReleaseVelocityFeature(KeyPositionTracker::key_b
 }
 void KeyPositionTracker::insert(KeyPositionTrackerNotification notification, timestamp_type timestamp)
 {
+	empty_ = false;
     //std::cout << "---Notification: " << KeyPositionTrackerNotification::desc[notification.type] << ", state: " << statesDesc[notification.state] << " at " << timestamp;
     if(notification.type == KeyPositionTrackerNotification::kNotificationTypeFeatureAvailableVelocity)
 	    printf("%.5f\n", pressVelocity().second);

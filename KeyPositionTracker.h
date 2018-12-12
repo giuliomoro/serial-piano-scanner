@@ -382,8 +382,8 @@ private:
     void unregisterForTrigger(KeyBuffer* b){};
     timestamp_type latestTimestamp() { return latestTimestamp_; };
     timestamp_type latestTimestamp_ = 0;
-    bool empty_ = true;
-    bool empty() {bool old = empty_; empty_ = false; return old;};
+    bool empty_;
+    bool empty() {return empty_;};
     void insert(KeyPositionTrackerNotification notification, timestamp_type timestamp);
 };
 
