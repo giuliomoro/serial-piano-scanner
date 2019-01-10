@@ -51,7 +51,7 @@ void postCallback(void* arg, float* buffer, unsigned int length)
 int main()
 {
 	int dummy = 0;
-	auto path = "/root/serial-calibration.txt";
+	auto path = "/root/out.calib";
 	keys = new Keys;
 	bt.setLowestNote(0);
 	bt.setBoard(0, 0, 24);
@@ -81,7 +81,7 @@ int main()
 	}
 	keys->setPostCallback(postCallback, keys);
 	keys->startTopCalibration();
-	keys->loadLinearCalibrationFile(path);
+	keys->loadInverseSquareCalibrationFile(path, 0);
 	signal(SIGINT, interrupt_handler);
 	signal(SIGTERM, interrupt_handler);
 	while(!gShouldStop)

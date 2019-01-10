@@ -330,7 +330,7 @@ int main()
 	bt.setLowestNote(0);
 	bt.setBoard(0, 0, 24);
 	bt.setBoard(1, 0, 23);
-	bt.setBoard(2, 0, 23);
+	bt.setBoard(2, 10, 23);
 	keys->setPostCallback(postCallback, keys);
 	int ret = keys->start(&bt, NULL);
 	keys->startTopCalibration();
