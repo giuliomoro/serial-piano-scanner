@@ -1,6 +1,6 @@
-CXXFLAGS=-O0 -g -I/root/spi-pru -std=c++14 -I/root/Bela/include
-LDLIBS=-lkeys
-LDFLAGS=-L/root/spi-pru
+CXXFLAGS=-O3 -I/root/spi-pru -std=c++14 -I/root/Bela/include
+LDLIBS=-lkeys -lcobalt
+LDFLAGS=-L/root/spi-pru -L/usr/xenomai/lib
 
 $(shell mkdir -p build)
 CPP_SRCS = $(wildcard *.cpp)
