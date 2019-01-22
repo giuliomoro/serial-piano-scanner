@@ -39,12 +39,12 @@ typedef size_t capacity_type;
 // Three states of idle detector
 enum {
 	kPositionTrackerStateUnknown = 0,
-    kPositionTrackerStatePartialPressAwaitingMax,
-    kPositionTrackerStatePartialPressFoundMax,
-    kPositionTrackerStatePressInProgress,
-    kPositionTrackerStateDown,
-    kPositionTrackerStateReleaseInProgress,
-    kPositionTrackerStateReleaseFinished
+    kPositionTrackerStatePartialPressAwaitingMax, //1 the key press has started
+    kPositionTrackerStatePartialPressFoundMax, //2 a local maximum has been found during onset: the key has been slightly released. This state is an optional transition from the previous to the next
+    kPositionTrackerStatePressInProgress,//3 if we encounter a local maximum, this advances to StateDown
+    kPositionTrackerStateDown,//4 
+    kPositionTrackerStateReleaseInProgress, //5 if the key goes back down before release is completed, we may go back to PressInProgress
+    kPositionTrackerStateReleaseFinished //6
 };
 
 const std::array<std::string, kPositionTrackerStateReleaseFinished + 1> statesDesc = {{
@@ -63,6 +63,8 @@ const key_position kPositionTrackerPressHysteresis = scale_key_position(0.05);
 const key_position kPositionTrackerMinMaxSpacingThreshold = scale_key_position(0.02);
 const key_position kPositionTrackerFirstMaxThreshold = scale_key_position(0.075);
 const key_position kPositionTrackerReleaseFinishPosition = scale_key_position(0.2);
+const key_position kPositionTrackerOnsetStartPositionMax = scale_key_position(0.2);
+const float kPositionTrackerMaxCoefficientForNewPress = 1.1;
 
 // How far back to search at the beginning to find the real start or release of a key press
 const int kPositionTrackerSamplesToSearchForStartLocation = 50;
@@ -338,6 +340,13 @@ private:
     timestamp_type releaseEndTimestamp_;                        // Timestamp of where the key release ended
     key_buffer_index releaseEndIndex_;                          // Index in the buffer of where the key release ended
     key_position currentMinPosition_, currentMaxPosition_;      // Running min and max key position
+public: // public for debugging
+    key_position releaseMaxPosition_;                    // Keeps track of the bounces during release
+    timestamp_type releaseMaxTimestamp_;                 // Keeps track of the bounces during release
+    timestamp_type releaseFinishedTimestamp_;                   // When did the release finish?
+    key_position releaseFinishedPosition_; // what position when we detected release finished
+    key_position dynamicOnsetThreshold_; // not needed internally, but useful for debugging
+private:
     timestamp_type currentMinTimestamp_, currentMaxTimestamp_;  // Times for the above positions
     key_buffer_index currentMinIndex_, currentMaxIndex_;        // Indices in the buffer for the recent min/max
     key_position lastMinMaxPosition_;                           // Position of the last significant point

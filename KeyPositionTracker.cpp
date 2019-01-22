@@ -313,16 +313,47 @@ void KeyPositionTracker::reset() {
     releaseVelocityEscapementPosition_ = kPositionTrackerDefaultPositionForReleaseVelocityCalculation;
     pressVelocityAvailableIndex_ = releaseVelocityAvailableIndex_ = percussivenessAvailableIndex_ = 0;
     releaseVelocityWaitingForThresholdCross_ = false;
+    releaseMaxPosition_ = missing_value<key_position>::missing();
+    releaseMaxTimestamp_  = missing_value<timestamp_type>::missing();
 }
 
 // Evaluator function. Update the current state
 void KeyPositionTracker::triggerReceived(/*TriggerSource* who,*/ timestamp_type timestamp) {
 
-	if(kPositionTrackerStateReleaseFinished == currentState_)
-		reset(); // as if we just created this object
 	//if(who != &keyBuffer_)
 		//return;
     
+    key_position currentKeyPosition = keyBuffer_.latest();
+
+    if(kPositionTrackerStateReleaseFinished == currentState_)
+    {
+        // account for bounces: following key release we may have
+        // multiple dampened oscillations. In order to detect a new keypress,
+        // we set a dynamic threshold to be always slightly above the
+        // latest max (due to the latest oscillation), or - if there is
+        // no bounce, or enough time has passed - a fixed threshold
+        timestamp_type refTimestamp;
+        key_position thresholdMagnitude;
+        if(missing_value<key_position>::isMissing(releaseMaxPosition_))
+        {
+            // waiting for the first bounce, 
+            thresholdMagnitude = kPositionTrackerOnsetStartPositionMax;
+            refTimestamp = releaseFinishedTimestamp_;
+        } else {
+            thresholdMagnitude = releaseMaxPosition_;
+            refTimestamp = releaseMaxTimestamp_;
+        }
+        thresholdMagnitude -= releaseFinishedPosition_; // if the calibration is a bit off, and key bottom is not 0, try to compensate for it
+        float decay = 300;
+        thresholdMagnitude *= 1.f - (timestamp - refTimestamp)/decay;
+        dynamicOnsetThreshold_ = thresholdMagnitude + releaseFinishedPosition_;
+        if(dynamicOnsetThreshold_ < currentKeyPosition)
+        {
+            // this really seems like a brand new key press: the
+            // old one is done and we reset the state machine
+            reset();
+        }
+    }
     // Always start in the partial press state after a reset, retroactively locating
     // the start position for this key press
     if(empty()) {
@@ -330,7 +361,6 @@ void KeyPositionTracker::triggerReceived(/*TriggerSource* who,*/ timestamp_type 
         changeState(kPositionTrackerStatePartialPressAwaitingMax, timestamp);
     }
     
-    key_position currentKeyPosition = keyBuffer_.latest();
     key_buffer_index currentBufferIndex = keyBuffer_.endIndex() - 1;
     
     // First, check queued actions to see if we can calculate a new feature
@@ -467,6 +497,11 @@ void KeyPositionTracker::triggerReceived(/*TriggerSource* who,*/ timestamp_type 
                         changeState(kPositionTrackerStatePartialPressFoundMax, stateChangeTimestamp);
                     }
                 }
+                else if (kPositionTrackerStateReleaseFinished == currentState_) {
+                    releaseMaxPosition_ = currentMaxPosition_;
+                    releaseMaxTimestamp_  = currentMaxTimestamp_;
+                }
+
                 
                 // Reinitialize the minimum value for the next search
                 currentMinIndex_ = currentBufferIndex;
@@ -561,13 +596,16 @@ void KeyPositionTracker::changeState(int newState, timestamp_type timestamp) {
                 percussivenessAvailableIndex_ = 0;
             }
             break;
+        case kPositionTrackerStateReleaseFinished:
+            releaseFinishedTimestamp_  = timestamp;
+            releaseFinishedPosition_ =  keyBuffer_.latest();
+            break;
         case kPositionTrackerStatePartialPressAwaitingMax:
         case kPositionTrackerStateUnknown:
             // Reset all features
             currentlyAvailableFeatures_ = KeyPositionTrackerNotification::kFeaturesNone;
             break;
         case kPositionTrackerStateDown:
-        case kPositionTrackerStateReleaseFinished:
         default:
             // Don't change features
             break;
