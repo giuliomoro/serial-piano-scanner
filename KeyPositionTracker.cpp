@@ -306,6 +306,7 @@ void KeyPositionTracker::disengage() {
 
 // Clear current state and reset to unknown state
 void KeyPositionTracker::reset() {
+	percussivenessFeatures_.percussiveness = missing_value<float>::missing();
 	//Node<KeyPositionTrackerNotification>::clear();
 	empty_ = true; // kind of equivalent to clear() above if we are not a circular buffer. This should be unset by "insert"
     
@@ -850,8 +851,9 @@ void KeyPositionTracker::insert(KeyPositionTrackerNotification notification, tim
 		    rt_printf("   v %7.5f\n", pressVelocity().second);
     } else if(notification.type == KeyPositionTrackerNotification::kNotificationTypeFeatureAvailablePercussiveness)
     {
+		percussivenessFeatures_ = pressPercussiveness();
+		auto& p = percussivenessFeatures_;
 		if(gPrint > 0) {
-			auto p = pressPercussiveness();
 			if(!missing_value<float>::isMissing(p.percussiveness)) {
 				rt_printf("p: %7.5f, ", p.percussiveness);
 				rt_printf("velspikemax: %10.5f, ", p.velocitySpikeMaximum.position);

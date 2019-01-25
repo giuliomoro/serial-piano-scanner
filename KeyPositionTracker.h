@@ -58,13 +58,13 @@ const std::array<std::string, kPositionTrackerStateReleaseFinished + 1> statesDe
 }};
 
 // Constants for key state detection
-const key_position kPositionTrackerPressPosition = scale_key_position(0.75);
-const key_position kPositionTrackerPressHysteresis = scale_key_position(0.05);
+constexpr key_position kPositionTrackerPressPosition = scale_key_position(0.75);
+constexpr key_position kPositionTrackerPressHysteresis = scale_key_position(0.05);
 const key_position kPositionTrackerMinMaxSpacingThreshold = scale_key_position(0.02);
 const key_position kPositionTrackerFirstMaxThreshold = scale_key_position(0.075);
 const key_position kPositionTrackerReleaseFinishPosition = scale_key_position(0.2);
-const key_position kPositionTrackerOnsetStartPositionMax = scale_key_position(0.2);
-const float kPositionTrackerMaxCoefficientForNewPress = 1.1;
+const key_position kPositionTrackerOnsetStartPositionMax = scale_key_position(0.3);
+constexpr float kPositionTrackerMaxCoefficientForNewPress = 1.1;
 
 // How far back to search at the beginning to find the real start or release of a key press
 const int kPositionTrackerSamplesToSearchForStartLocation = 50;
@@ -394,6 +394,8 @@ private:
     bool empty_;
     bool empty() {return empty_;};
     void insert(KeyPositionTrackerNotification notification, timestamp_type timestamp);
+public:
+    PercussivenessFeatures percussivenessFeatures_;
 };
 
 
