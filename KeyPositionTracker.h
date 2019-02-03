@@ -60,11 +60,16 @@ const std::array<std::string, kPositionTrackerStateReleaseFinished + 1> statesDe
 // Constants for key state detection
 constexpr key_position kPositionTrackerPressPosition = scale_key_position(0.75);
 constexpr key_position kPositionTrackerPressHysteresis = scale_key_position(0.05);
-const key_position kPositionTrackerMinMaxSpacingThreshold = scale_key_position(0.02);
-const key_position kPositionTrackerFirstMaxThreshold = scale_key_position(0.075);
+const key_position kPositionTrackerMinMaxSpacingThreshold = scale_key_position(0.002);
+const key_position kPositionTrackerFirstMaxThreshold = scale_key_position(0.02);
+//const key_position kPositionTrackerFirstMaxThreshold = scale_key_position(0.02);
 const key_position kPositionTrackerReleaseFinishPosition = scale_key_position(0.2);
 const key_position kPositionTrackerOnsetStartPositionMax = scale_key_position(0.3);
 constexpr float kPositionTrackerMaxCoefficientForNewPress = 1.1;
+const key_position kPositionTrackerReleaseMaxysteresis = scale_key_position(0.003);
+const key_position kPositionTrackerReleaseInitialMax = scale_key_position(0.4);
+const key_position kPositionTrackerReleaseMinDynamicOnsetThreshold = scale_key_position(0.02);
+const key_position kPositionTrackerPeakInstantaneousVelocityMinThreshold = scale_key_position(0.005);
 
 // How far back to search at the beginning to find the real start or release of a key press
 const int kPositionTrackerSamplesToSearchForStartLocation = 50;
@@ -203,6 +208,7 @@ public:
         float percussiveness;                   // Calculated single feature based on everything below
         Event velocitySpikeMaximum;             // Maximum and minimum points of the initial
         Event velocitySpikeMinimum;             // velocity spike on a percussive press
+	float velocityAverageAroundSpike;       // velocity spike on a percussive press
         timestamp_type timeFromStartToSpike;    // How long it took to reach the velocity spike
         key_velocity areaPrecedingSpike;        // Total sum of velocity values from start to max
         key_velocity areaFollowingSpike;        // Total sum of velocity values from max to min
