@@ -28,6 +28,6 @@ private:
 	float percussiveness;
 	unsigned int timestamp;
 	static constexpr float bendPrimaryDisengageThreshold = kPositionTrackerPressPosition - kPositionTrackerPressHysteresis;
-	static constexpr float bendOnThreshold = 0.1;
+	static constexpr float bendOnThreshold = 0.2;
 	static constexpr int bendMaxDistance = 3;
 };

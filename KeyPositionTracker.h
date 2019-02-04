@@ -212,6 +212,7 @@ public:
         timestamp_type timeFromStartToSpike;    // How long it took to reach the velocity spike
         key_velocity areaPrecedingSpike;        // Total sum of velocity values from start to max
         key_velocity areaFollowingSpike;        // Total sum of velocity values from max to min
+        bool hasBeenRead;
     };
     
 public:
@@ -400,8 +401,9 @@ private:
     bool empty_;
     bool empty() {return empty_;};
     void insert(KeyPositionTrackerNotification notification, timestamp_type timestamp);
-public:
     PercussivenessFeatures percussivenessFeatures_;
+public:
+    Event getPercussiveness();
 };
 
 

@@ -87,8 +87,11 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	{
 		if(n != primaryKey && buffer[n] > secondaryPos)
 		{
-			secondaryPos = buffer[n];
-			secondaryKey = n;
+			if(isPressing(states[n]))
+			{
+				secondaryPos = buffer[n];
+				secondaryKey = n;
+			}
 		}
 	}
 	float bendValue = 0;
@@ -134,13 +137,15 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	position = states[primaryKey] != kPositionTrackerStateReleaseFinished ? buffer[primaryKey] : 0;
 	++timestamp;
 
-	//get percussiveness.
-	//Percussiveness of secondaryKey is higher priority than that of first key 
-	float tempPerc = keyPositionTrackers[secondaryKey].percussivenessFeatures_.percussiveness;
-	if(missing_value<float>::isMissing(tempPerc)) {
-		tempPerc = keyPositionTrackers[primaryKey].percussivenessFeatures_.percussiveness;
-		if(missing_value<float>::isMissing(tempPerc)) {
-			tempPerc = 0;
+	float tempPerc = 0;
+	for(unsigned int n = secondaryFirst; n < secondaryLast; ++n)
+	{
+		auto event = keyPositionTrackers[n].getPercussiveness();
+		if(!missing_value<float>::isMissing(event.position))
+		{
+			tempPerc = event.position;
+			rt_printf("======= percKey: %d, %f\n", n, tempPerc);
+			break;
 		}
 	}
 	percussiveness = tempPerc;

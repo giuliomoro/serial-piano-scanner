@@ -192,6 +192,7 @@ const int kSamplesNeededForPercussiveness = 6;
 // Calculate and return features about the percussiveness of the key press
 KeyPositionTracker::PercussivenessFeatures KeyPositionTracker::pressPercussiveness() {
     PercussivenessFeatures features;
+    features.hasBeenRead = false;
     key_buffer_index index;
     key_velocity maximumVelocity, largestVelocityDifference;
     key_buffer_index maximumVelocityIndex, largestVelocityDifferenceIndex;
@@ -327,6 +328,7 @@ void KeyPositionTracker::disengage() {
 // Clear current state and reset to unknown state
 void KeyPositionTracker::reset() {
 	percussivenessFeatures_.percussiveness = missing_value<float>::missing();
+	percussivenessFeatures_.hasBeenRead = true;
 	percussivenessFeatures_.velocityAverageAroundSpike = missing_value<float>::missing();
 	//Node<KeyPositionTrackerNotification>::clear();
 	empty_ = true; // kind of equivalent to clear() above if we are not a circular buffer. This should be unset by "insert"
@@ -985,4 +987,20 @@ void KeyPositionTracker::insert(KeyPositionTrackerNotification notification, tim
 		}
     }
     latestTimestamp_ = timestamp;
+}
+
+KeyPositionTracker::Event KeyPositionTracker::getPercussiveness()
+{
+	Event event;
+	if(percussivenessFeatures_.hasBeenRead == false)
+	{
+		event = percussivenessFeatures_.velocitySpikeMaximum;
+		rt_printf("sharing percussivness: %f\n", event.position);
+		percussivenessFeatures_.hasBeenRead = true;
+	} else {
+		event.index = missing_value<key_buffer_index>::missing();
+		event.position = missing_value<key_position>::missing();
+		event.timestamp = missing_value<timestamp_type>::missing();
+	}
+	return event;
 }
