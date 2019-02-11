@@ -95,9 +95,9 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 		}
 	}
 	float bendValue = 0;
+	int distance = 0;
 	if(secondaryPos > bendOnThreshold)
 	{
-		float primaryPos = *foundMax;
 		int secondaryState = states[secondaryKey];
 		int primaryState = states[primaryKey];
 		// we are actually bending if the primary key is down and the
@@ -105,7 +105,7 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 		if(isPressed(primaryState) && isPressing(secondaryState))
 		{
 			// the "bending" gesture is active
-			int distance = secondaryKey - primaryKey;
+			distance = secondaryKey - primaryKey;
 			float bendingRange = kPositionTrackerPressPosition + kPositionTrackerPressHysteresis - bendOnThreshold;
 			float bendCoeff = (secondaryPos - bendOnThreshold) / bendingRange;
 			// clamp
@@ -129,8 +129,8 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 		}
 	}
 	bend = bendValue;
+	bendRange = distance;
 	monoKey = primaryKey;
-	otherKey = secondaryKey;
 	otherPosition = buffer[secondaryKey];
 	//position = buffer[primaryKey];
 	// gate off position of primaryKey if it's bouncing after release
@@ -174,6 +174,11 @@ float KeyboardState::getOtherPosition()
 float KeyboardState::getBend()
 {
 	return bend;
+}
+
+float KeyboardState::getBendRange()
+{
+	return bendRange;
 }
 
 float KeyboardState::getPercussiveness()

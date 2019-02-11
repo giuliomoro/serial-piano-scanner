@@ -14,6 +14,7 @@ public:
 	float getPosition();
 	float getOtherPosition();
 	float getBend();
+	float getBendRange();
 	float getPercussiveness();
 private:
 	std::vector<int> pastStates;
@@ -27,7 +28,8 @@ private:
 	float otherPosition;
 	float percussiveness;
 	unsigned int timestamp;
+	float bendRange;
 	static constexpr float bendPrimaryDisengageThreshold = kPositionTrackerPressPosition - kPositionTrackerPressHysteresis;
 	static constexpr float bendOnThreshold = 0.2;
-	static constexpr int bendMaxDistance = 3;
+	static constexpr int bendMaxDistance = 4;
 };
