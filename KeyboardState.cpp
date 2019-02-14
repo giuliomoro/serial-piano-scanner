@@ -131,6 +131,7 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	bend = bendValue;
 	bendRange = distance;
 	monoKey = primaryKey;
+	otherKey = secondaryKey;
 	otherPosition = buffer[secondaryKey];
 	//position = buffer[primaryKey];
 	// gate off position of primaryKey if it's bouncing after release
