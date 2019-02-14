@@ -6,6 +6,8 @@
 const float KeyboardState::bendOnThreshold;
 const float KeyboardState::bendPrimaryDisengageThreshold;
 const int KeyboardState::bendMaxDistance;
+const float KeyboardState::highestPositionHysteresisStart;
+const float KeyboardState::highestPositionHysteresisDecay;
 
 KeyboardState::KeyboardState(unsigned int numKeys)
 {
@@ -77,6 +79,18 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	{
 		primaryKey = mostRecent - timestamps.data();
 	}
+
+	if(primaryKey != monoKey)
+	{
+		if(buffer[monoKey] > 0.1 && buffer[primaryKey] > 0.1)
+		// adding hysteresis to make sure we don't switch too often because of noise
+		if(kPositionTrackerPressPosition + highestPositionHysteresis > buffer[primaryKey])
+		{
+			highestPositionHysteresis = highestPositionHysteresisStart;
+			primaryKey = monoKey;
+		}
+	}
+	highestPositionHysteresis *= highestPositionHysteresisDecay;
 
 	// looking for neighbouring keys being pressed down, to detect "bending" gesture
 	int secondaryFirst = std::max(first, primaryKey - bendMaxDistance);
