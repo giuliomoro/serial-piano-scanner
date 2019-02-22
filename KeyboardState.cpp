@@ -79,15 +79,16 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	{
 		primaryKey = mostRecent - timestamps.data();
 	}
-
 	if(primaryKey != monoKey)
 	{
 		if(buffer[monoKey] > 0.1 && buffer[primaryKey] > 0.1)
-		// adding hysteresis to make sure we don't switch too often because of noise
-		if(kPositionTrackerPressPosition + highestPositionHysteresis > buffer[primaryKey])
 		{
-			highestPositionHysteresis = highestPositionHysteresisStart;
-			primaryKey = monoKey;
+			// adding hysteresis to make sure we don't switch too often because of noise
+			if(kPositionTrackerPressPosition + highestPositionHysteresis > buffer[primaryKey])
+			{
+				highestPositionHysteresis = highestPositionHysteresisStart;
+				primaryKey = monoKey;
+			}
 		}
 	}
 	highestPositionHysteresis *= highestPositionHysteresisDecay;
