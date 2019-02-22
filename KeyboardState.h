@@ -35,4 +35,5 @@ private:
 	static constexpr int bendMaxDistance = 4;
 	static constexpr float highestPositionHysteresisStart = 0.03;
 	static constexpr float highestPositionHysteresisDecay = 0.95;
+	static constexpr float bendSmoothEnd = 0.1;
 };

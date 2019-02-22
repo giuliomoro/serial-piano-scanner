@@ -8,6 +8,7 @@ const float KeyboardState::bendPrimaryDisengageThreshold;
 const int KeyboardState::bendMaxDistance;
 const float KeyboardState::highestPositionHysteresisStart;
 const float KeyboardState::highestPositionHysteresisDecay;
+const float KeyboardState::bendSmoothEnd;
 
 KeyboardState::KeyboardState(unsigned int numKeys)
 {
@@ -147,10 +148,17 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	bendRange = distance;
 	monoKey = primaryKey;
 	otherKey = secondaryKey;
+	// as the bend gesture is approaching the end (full bend), crossfade
+	// the position values of the two keys
+	float bendIdx = bend / bendRange;
+	float bendSmoothIdx = bendIdx > 1.f - bendSmoothEnd ?
+		(bendIdx - (1.f - bendSmoothEnd)) / bendSmoothEnd : 0;
 	otherPosition = buffer[secondaryKey];
 	//position = buffer[primaryKey];
 	// gate off position of primaryKey if it's bouncing after release
 	position = states[primaryKey] != kPositionTrackerStateReleaseFinished ? buffer[primaryKey] : 0;
+	position = position * (1.f - bendSmoothIdx) + otherPosition * bendSmoothIdx;
+
 	++timestamp;
 
 	float tempPerc = 0;
