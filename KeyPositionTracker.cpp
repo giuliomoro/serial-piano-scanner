@@ -259,7 +259,7 @@ KeyPositionTracker::PercussivenessFeatures KeyPositionTracker::pressPercussivene
     }
 
 	bool notPercussive = false;
-    if(maximumVelocity < 0.003)
+    if(maximumVelocity < kPositionTrackerMaxVelocityPercussiveThreshold)
     {
 	    notPercussive = true;
 	    rt_printf("notPercussive ");

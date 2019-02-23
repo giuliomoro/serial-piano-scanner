@@ -79,6 +79,7 @@ const int kPositionTrackerSamplesToAverageForStartVelocity = 3;
 const key_velocity kPositionTrackerStartVelocityThreshold = scale_key_velocity(0.5);
 const key_velocity kPositionTrackerStartVelocitySpikeThreshold = scale_key_velocity(2.5);
 const key_velocity kPositionTrackerReleaseVelocityThreshold = scale_key_velocity(-0.2);
+const key_velocity kPositionTrackerMaxVelocityPercussiveThreshold = 0.006;
 
 // Constants for feature calculations. The first one is the approximate location of the escapement
 // (empirically measured on one piano, so only approximate), used for velocity calculations
