@@ -19,7 +19,8 @@ public:
 private:
 	std::vector<int> pastStates;
 	std::vector<int> states;
-	std::vector<double> timestamps;
+	std::vector<unsigned int> timestampsDown;
+	std::vector<unsigned int> timestampsProgress;
 	unsigned int numKeys;
 	int monoKey;
 	int otherKey;
@@ -36,4 +37,5 @@ private:
 	static constexpr float highestPositionHysteresisStart = 0.03;
 	static constexpr float highestPositionHysteresisDecay = 0.95;
 	static constexpr float bendSmoothEnd = 0.1;
+	static constexpr float pressingKeyOnThreshold = 0.4;
 };

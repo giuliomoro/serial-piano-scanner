@@ -9,6 +9,7 @@ const int KeyboardState::bendMaxDistance;
 const float KeyboardState::highestPositionHysteresisStart;
 const float KeyboardState::highestPositionHysteresisDecay;
 const float KeyboardState::bendSmoothEnd;
+const float KeyboardState::pressingKeyOnThreshold;
 
 KeyboardState::KeyboardState(unsigned int numKeys)
 {
@@ -21,7 +22,8 @@ bool KeyboardState::setup(unsigned int numKeys)
 	this->numKeys = numKeys;
 	pastStates.resize(numKeys, kPositionTrackerStateUnknown);
 	states.resize(numKeys, kPositionTrackerStateUnknown);
-	timestamps.resize(numKeys, timestamp);
+	timestampsDown.resize(numKeys, timestamp);
+	timestampsProgress.resize(numKeys, timestamp);
 	return true;
 }
 
@@ -61,31 +63,51 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 		if(kPositionTrackerStateDown == state
 			&& kPositionTrackerStateDown != pastStates[n]) 
 		{
-			timestamps[n] = timestamp;
+			timestampsDown[n] = timestamp;
 		}
 		else if(kPositionTrackerStateDown == pastStates[n]
 			&& kPositionTrackerStateDown != state) 
 		{
-			timestamps[n] = 0;
+			timestampsDown[n] = 0;
+		}
+
+		if(buffer[n] > pressingKeyOnThreshold && isPressing(state) && 0 == timestampsProgress[n])
+		{
+			timestampsProgress[n] = timestamp;
+		} else if(buffer[n] <= pressingKeyOnThreshold - 0.05 && 0 != timestampsProgress[n])
+		{
+			timestampsProgress[n] = 0;
 		}
 		pastStates[n] = states[n];
 		states[n] = state;
 	}
 	float* foundMax = std::max_element(buffer + first, buffer + last);
 	int primaryKey = foundMax - buffer;
-	auto* mostRecent = std::max_element(timestamps.data(), timestamps.data() + timestamps.size());
+	auto* mostRecentDown = std::max_element(timestampsDown.data(), timestampsDown.data() + timestampsDown.size());
+
+	auto* mostRecentProgress = std::max_element(timestampsProgress.data(), timestampsProgress.data() + timestampsProgress.size());
 	// if there is at least one key that is in "key down" state,
-	// then that will be our primaryKey, instead
-	if(*mostRecent != 0)
+	// then that will be our primaryKey, instead, unless there is a key
+	// that most recently entered the "press in progress" state that is
+	// outside the bending range
+	if(*mostRecentDown != 0)
 	{
-		primaryKey = mostRecent - timestamps.data();
+		int mostRecentProgressKey = mostRecentProgress - timestampsProgress.data();
+		int mostRecentDownKey = mostRecentDown - timestampsDown.data();
+		if(0 != *mostRecentProgress && *mostRecentProgress > *mostRecentDown
+			&& std::abs(mostRecentProgressKey - mostRecentDownKey) > bendMaxDistance)
+		{
+			primaryKey = mostRecentProgressKey;
+		} else {
+			primaryKey = mostRecentDownKey;
+		}
 	}
 	if(primaryKey != monoKey)
 	{
 		if(buffer[monoKey] > 0.1 && buffer[primaryKey] > 0.1)
 		{
 			// adding hysteresis to make sure we don't switch too often because of noise
-			if(kPositionTrackerPressPosition + highestPositionHysteresis > buffer[primaryKey])
+			if(pressingKeyOnThreshold + highestPositionHysteresis > buffer[primaryKey])
 			{
 				highestPositionHysteresis = highestPositionHysteresisStart;
 				primaryKey = monoKey;
@@ -132,7 +154,7 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 			isReleasing(primaryState)
 			|| (
 				isPressed(secondaryState)
-				&& timestamps[secondaryKey] > timestamps[primaryKey]
+				&& timestampsDown[secondaryKey] > timestampsDown[primaryKey]
 			)
 		)
 		{
