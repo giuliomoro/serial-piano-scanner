@@ -47,12 +47,13 @@ bool KeyBuffers::setup(unsigned int numKeys, unsigned int bufferLength)
 void KeyBuffers::postCallback(void* arg, float* buffer, unsigned int length)
 {
 	KeyBuffers* that = (KeyBuffers*)arg;
-	that->postCallback(buffer, length);
+	static int count = 0;
+	that->postCallback(buffer, length, count/1000.f);
+	++count;
 }
 
-void KeyBuffers::postCallback(float* buffer, unsigned int length)
+void KeyBuffers::postCallback(float* buffer, unsigned int length, timestamp_type timestamp)
 {
-	static timestamp_type ts = 0;
 	for(unsigned int n = 0; n < std::min(positionBuffer.size(), length); ++n)
 	{
 		positionBuffer[n][writeIdx] = buffer[n];
@@ -64,9 +65,8 @@ TODO: fix this instead of using static ts
 		else
 			ts = writeIdx;
 			*/
-		timestamps[n][writeIdx] = ts;
+		timestamps[n][writeIdx] = timestamp;
 	}
-	++ts;
 	++writeIdx;
 	if(writeIdx >= positionBuffer[0].size())
 	{

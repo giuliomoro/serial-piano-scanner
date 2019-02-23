@@ -92,7 +92,7 @@ class KeyBuffers
 {
 public:
 	bool setup(unsigned int numKeys, unsigned int bufferLength);
-	void postCallback(float* buffer, unsigned int length);
+	void postCallback(float* buffer, unsigned int length, timestamp_type timestamp);
 	static void postCallback(void* arg, float* buffer, unsigned int length);
 	std::vector<std::vector<timestamp_type>> timestamps;
 	std::vector<std::vector<float>> positionBuffer;
