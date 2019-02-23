@@ -31,6 +31,7 @@ private:
 	unsigned int timestamp;
 	float bendRange;
 	float highestPositionHysteresis = 0;
+	unsigned int lastPercussivenessTimestamp = 0;
 	static constexpr float bendPrimaryDisengageThreshold = kPositionTrackerPressPosition - kPositionTrackerPressHysteresis;
 	static constexpr float bendOnThreshold = 0.2;
 	static constexpr int bendMaxDistance = 4;

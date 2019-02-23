@@ -183,18 +183,24 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 
 	++timestamp;
 
-	float tempPerc = 0;
+// threshold new percussive events, with a moving threshold, depending on when
+// the previous most recent one was, and its intensity
+	int timeDiff = timestamp - lastPercussivenessTimestamp;
+	float percThreshold = percussiveness - timeDiff * 0.001f;
 	for(unsigned int n = secondaryFirst; n < secondaryLast; ++n)
 	{
 		auto event = keyPositionTrackers[n].getPercussiveness();
 		if(!missing_value<float>::isMissing(event.position))
 		{
-			tempPerc = event.position;
-			rt_printf("======= percKey: %d, %f\n", n, tempPerc);
-			break;
+			if(event.position > percThreshold)
+			{
+				percussiveness = event.position;
+				lastPercussivenessTimestamp = timestamp;
+				//rt_printf("======= percKey: %d, %f\n", n, tempPerc);
+				break;
+			}
 		}
 	}
-	percussiveness = tempPerc;
 }
 
 int KeyboardState::getKey()
