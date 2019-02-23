@@ -992,7 +992,7 @@ void KeyPositionTracker::insert(KeyPositionTrackerNotification notification, tim
 KeyPositionTracker::Event KeyPositionTracker::getPercussiveness()
 {
 	Event event;
-	if(percussivenessFeatures_.hasBeenRead == false)
+	if(percussivenessFeatures_.hasBeenRead == false && percussivenessFeatures_.percussiveness)
 	{
 		event = percussivenessFeatures_.velocitySpikeMaximum;
 		rt_printf("sharing percussivness: %f\n", event.position);
