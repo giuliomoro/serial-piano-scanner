@@ -132,9 +132,12 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 			// either it's an onset, or it's a potential debend
 			if(
 #ifdef DEBEND
-				n == lastBentTo ||
+				(primaryKey == lastBentTo && n == lastBentFrom)
+				|| (primaryKey == lastBentFrom && n == lastBentTo)
+				||
 #endif /* DEBEND */
-				isPressing(states[n]))
+				isPressing(states[n])
+			)
 			{
 				secondaryPos = buffer[n];
 				secondaryKey = n;
@@ -145,16 +148,17 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	int distance = 0;
 	bool debend = false; //We leave this declared even if not DEBEND, to simplify below
 #ifdef DEBEND
+	rt_printf("primaryKey: %d, secondaryKey: %d\n", primaryKey, secondaryKey);
 	if(lastBentTo == primaryKey && lastBentFrom == secondaryKey)
 	{
 		// we previously bent A to B, so that now B is down and it is the primaryKey.
 		// Let's instead consider it as if A was still the primary key, bending to B,
-		//  so that as B starts releasing, we do debend to A
+		// so that as B starts releasing, we debend to A
 		debend = true;
 		std::swap(primaryKey, secondaryKey);
 		secondaryPos = buffer[secondaryKey];
 	} else if (lastBentTo == secondaryKey && lastBentFrom == primaryKey) {
-		// we previously bent A to B. Now B has released enough that A is the primaryKey again, let's keep 
+		// we previously bent A to B. Now B has released enough that A is the primaryKey again, let's keep
 		// track of the debend, so that even if B is
 		// "releaseInProgress", and it would normally not trigger a new
 		// bend, we still use it to debend B to A
