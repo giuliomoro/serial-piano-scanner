@@ -2,6 +2,7 @@
 #include <KeyPositionTracker.h>
 #include <vector>
 
+#define DEBEND
 class KeyboardState
 {
 public:
@@ -32,8 +33,12 @@ private:
 	float bendRange;
 	float highestPositionHysteresis = 0;
 	unsigned int lastPercussivenessTimestamp = 0;
+#ifdef DEBEND
+	int lastBentTo = -1;
+	int lastBentFrom = -1;
+#endif /* DEBEND */
 	static constexpr float bendPrimaryDisengageThreshold = kPositionTrackerPressPosition - kPositionTrackerPressHysteresis;
-	static constexpr float bendOnThreshold = 0.2;
+	static constexpr float bendOnThreshold = 0.1;
 	static constexpr int bendMaxDistance = 4;
 	static constexpr float highestPositionHysteresisStart = 0.03;
 	static constexpr float highestPositionHysteresisDecay = 0.95;

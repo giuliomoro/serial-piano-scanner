@@ -68,6 +68,10 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 		else if(kPositionTrackerStateDown == pastStates[n]
 			&& kPositionTrackerStateDown != state) 
 		{
+#ifdef DEBEND
+			if(n == lastBentFrom)
+				lastBentFrom = -1;
+#endif /* DEBEND */
 			timestampsDown[n] = 0;
 		}
 
@@ -125,7 +129,12 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	{
 		if(n != primaryKey && buffer[n] > secondaryPos)
 		{
-			if(isPressing(states[n]))
+			// either it's an onset, or it's a potential debend
+			if(
+#ifdef DEBEND
+				n == lastBentTo ||
+#endif /* DEBEND */
+				isPressing(states[n]))
 			{
 				secondaryPos = buffer[n];
 				secondaryKey = n;
@@ -134,13 +143,33 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	}
 	float bendValue = 0;
 	int distance = 0;
+	bool debend = false; //We leave this declared even if not DEBEND, to simplify below
+#ifdef DEBEND
+	if(lastBentTo == primaryKey && lastBentFrom == secondaryKey)
+	{
+		// we previously bent A to B, so that now B is down and it is the primaryKey.
+		// Let's instead consider it as if A was still the primary key, bending to B,
+		//  so that as B starts releasing, we do debend to A
+		debend = true;
+		std::swap(primaryKey, secondaryKey);
+		secondaryPos = buffer[secondaryKey];
+	} else if (lastBentTo == secondaryKey && lastBentFrom == primaryKey) {
+		// we previously bent A to B. Now B has released enough that A is the primaryKey again, let's keep 
+		// track of the debend, so that even if B is
+		// "releaseInProgress", and it would normally not trigger a new
+		// bend, we still use it to debend B to A
+		debend = true;
+	} else {
+		debend = false;
+	}
+#endif /* DEBEND */
 	if(secondaryPos > bendOnThreshold)
 	{
 		int secondaryState = states[secondaryKey];
 		int primaryState = states[primaryKey];
 		// we are actually bending if the primary key is down and the
 		// secondary key is going down
-		if(isPressed(primaryState) && isPressing(secondaryState))
+		if(debend || (isPressed(primaryState) && isPressing(secondaryState)))
 		{
 			// the "bending" gesture is active
 			distance = secondaryKey - primaryKey;
@@ -149,12 +178,19 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 			// clamp
 			bendCoeff = std::min(1.f, std::max(-1.f, bendCoeff));
 			bendValue = bendCoeff * distance;
+#ifdef DEBEND
+			lastBentTo = secondaryKey;
+			lastBentFrom = primaryKey;
+#endif /* DEBEND */
 		}
 		else if (
-			isReleasing(primaryState)
-			|| (
-				isPressed(secondaryState)
-				&& timestampsDown[secondaryKey] > timestampsDown[primaryKey]
+			!debend
+			&& (
+				isReleasing(primaryState)
+				|| (
+					isPressed(secondaryState)
+					&& timestampsDown[secondaryKey] > timestampsDown[primaryKey]
+				)
 			)
 		)
 		{
