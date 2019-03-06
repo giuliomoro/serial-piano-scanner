@@ -8,7 +8,6 @@ const float KeyboardState::bendPrimaryDisengageThreshold;
 const int KeyboardState::bendMaxDistance;
 const float KeyboardState::highestPositionHysteresisStart;
 const float KeyboardState::highestPositionHysteresisDecay;
-const float KeyboardState::bendSmoothEnd;
 const float KeyboardState::pressingKeyOnThreshold;
 
 KeyboardState::KeyboardState(unsigned int numKeys)
@@ -210,16 +209,19 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	bendRange = distance;
 	monoKey = primaryKey;
 	otherKey = secondaryKey;
-	// as the bend gesture is approaching the end (full bend), crossfade
-	// the position values of the two keys
-	float bendIdx = bend / bendRange;
-	float bendSmoothIdx = bendIdx > 1.f - bendSmoothEnd ?
-		(bendIdx - (1.f - bendSmoothEnd)) / bendSmoothEnd : 0;
-	otherPosition = buffer[secondaryKey];
-	//position = buffer[primaryKey];
+	// crossfade the position values of the two keys, with offset and weight to make it less drastic
+	float bendIdx;
 	// gate off position of primaryKey if it's bouncing after release
-	position = states[primaryKey] != kPositionTrackerStateReleaseFinished ? buffer[primaryKey] : 0;
-	position = position * (1.f - bendSmoothIdx) + otherPosition * bendSmoothIdx;
+	float primaryPosition = states[primaryKey] != kPositionTrackerStateReleaseFinished ? buffer[primaryKey] : 0;
+	if(bendRange) {
+		bendIdx = bend / bendRange;
+		otherPosition = buffer[secondaryKey];
+		float positionWeightPrimary = (1.f - bendIdx) * positionCrossFadeDip + (1.f - positionCrossFadeDip);
+		float positionWeightSecondary = bendIdx * positionCrossFadeDip + (1.f - positionCrossFadeDip);
+		position = primaryPosition * positionWeightPrimary + otherPosition * positionWeightSecondary;
+	} else {
+		position = primaryPosition;
+	}
 
 	++timestamp;
 
@@ -276,4 +278,8 @@ float KeyboardState::getBendRange()
 float KeyboardState::getPercussiveness()
 {
 	return percussiveness;
+}
+void KeyboardState::setPositionCrossFadeDip(float newWeight)
+{
+	positionCrossFadeDip = std::max(0.f, std::min(1.f, newWeight));
 }

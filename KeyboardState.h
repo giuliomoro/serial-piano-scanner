@@ -3,6 +3,7 @@
 #include <vector>
 
 #define DEBEND
+//#define PREV_POS
 class KeyboardState
 {
 public:
@@ -17,6 +18,7 @@ public:
 	float getBend();
 	float getBendRange();
 	float getPercussiveness();
+	void setPositionCrossFadeDip(float newWeight);
 private:
 	std::vector<int> pastStates;
 	std::vector<int> states;
@@ -37,11 +39,12 @@ private:
 	int lastBentTo = -1;
 	int lastBentFrom = -1;
 #endif /* DEBEND */
+	// tunables
+	float positionCrossFadeDip = 0.1;
 	static constexpr float bendPrimaryDisengageThreshold = kPositionTrackerPressPosition - kPositionTrackerPressHysteresis;
 	static constexpr float bendOnThreshold = 0.1;
 	static constexpr int bendMaxDistance = 4;
 	static constexpr float highestPositionHysteresisStart = 0.03;
 	static constexpr float highestPositionHysteresisDecay = 0.95;
-	static constexpr float bendSmoothEnd = 0.1;
 	static constexpr float pressingKeyOnThreshold = 0.4;
 };
