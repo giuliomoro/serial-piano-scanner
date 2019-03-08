@@ -216,9 +216,9 @@ void KeyboardState::render(float* buffer, std::vector<KeyPositionTracker>& keyPo
 	if(bendRange) {
 		bendIdx = bend / bendRange;
 		otherPosition = buffer[secondaryKey];
-		float positionWeightPrimary = (1.f - bendIdx) * positionCrossFadeDip + (1.f - positionCrossFadeDip);
-		float positionWeightSecondary = bendIdx * positionCrossFadeDip + (1.f - positionCrossFadeDip);
-		position = primaryPosition * positionWeightPrimary + otherPosition * positionWeightSecondary;
+		float positionWeightPrimary = (1.f - bendIdx) * positionCrossFadeDip;
+		float positionWeightSecondary = bendIdx * positionCrossFadeDip;
+		position = primaryPosition * positionWeightPrimary + otherPosition * positionWeightSecondary + (1.f - positionCrossFadeDip);
 	} else {
 		position = primaryPosition;
 	}

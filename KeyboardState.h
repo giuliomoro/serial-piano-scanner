@@ -3,7 +3,6 @@
 #include <vector>
 
 #define DEBEND
-//#define PREV_POS
 class KeyboardState
 {
 public:
